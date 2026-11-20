@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080e10">
+  <meta name="description" content="Sinal de Cinza — um survival horror 2D sobre uma transmissão que não deveria continuar tocando.">
+  <title>Sinal de Cinza</title>
+  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <main class="app-shell" id="app-shell">
+    <header class="masthead">
+      <a class="wordmark" href="#inicio" aria-label="Sinal de Cinza, início">
+        <span class="signal-mark" aria-hidden="true"><i></i><i></i><i></i><b></b></span>
+        <span>SINAL <em>DE</em> CINZA</span>
+      </a>
+      <div class="chapter-label" id="chapter-label">CASA SALINA · 03:17</div>
+      <button class="icon-button sound-toggle" id="sound-toggle" type="button" aria-label="Ativar ou silenciar áudio" title="Áudio">♪</button>
+    </header>
+
+    <section class="game-frame" aria-label="Área do jogo">
+      <div class="canvas-wrap" id="canvas-wrap">
+        <canvas id="game-canvas" width="960" height="540" tabindex="0" aria-label="Jogo Sinal de Cinza. Use WASD ou setas para andar; E interage.">
+          Seu navegador não oferece suporte a Canvas. Abra este jogo num navegador moderno.
+        </canvas>
+        <div class="scanlines" aria-hidden="true"></div>
+        <section id="hud" class="hud is-hidden" aria-live="polite">
+          <div class="hud-top">
+            <div class="vitals" aria-label="Vida"><span class="hud-caption">PULSO</span><div id="health-pips" class="pips"></div></div>
+            <div class="objective-box"><span class="hud-caption">AGORA</span><span id="objective-text">Encontre um fusível.</span></div>
+            <div class="battery-box"><span class="hud-caption">LANTERNA</span><div class="battery-track"><i id="battery-level"></i></div><span id="battery-number">100%</span></div>
+          </div>
+          <div class="hud-bottom"><span id="room-name">Saguão</span><span id="interaction-hint"></span></div>
+        </section>
+
+        <div id="screen-layer" class="screen-layer" aria-live="polite"></div>
+        <div id="modal-root" class="modal-root" aria-live="assertive"></div>
+
+        <div id="touch-controls" class="touch-controls" aria-label="Controles de toque">
+          <div class="touch-stick" id="touch-stick" role="application" aria-label="Joystick virtual"><div class="stick-knob" id="stick-knob"></div></div>
+          <div class="touch-actions">
+            <button type="button" id="touch-inventory" class="touch-button small" aria-label="Abrir inventário">BOLSA</button>
+            <button type="button" id="touch-flashlight" class="touch-button" aria-label="Alternar lanterna">LUZ</button>
+            <button type="button" id="touch-interact" class="touch-button primary" aria-label="Interagir">USAR</button>
+          </div>
+        </div>
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </div>
+    </section>
+    <footer class="footer-line"><span>UMA HISTÓRIA DE CASA SALINA</span><span>WASD / ↑↓←→ · E INTERAGE · F LANTERNA · I INVENTÁRIO · ESC PAUSA</span></footer>
+  </main>
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>

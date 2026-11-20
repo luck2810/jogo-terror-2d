@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="240" viewBox="0 0 640 240">
+  <rect width="640" height="240" fill="#080e10"/>
+  <path d="M52 121h38l15-33 18 71 18-48 16 10h32" fill="none" stroke="#c06a46" stroke-width="5" stroke-linecap="square" stroke-linejoin="miter"/>
+  <path d="M205 121h20" stroke="#9d9c89" stroke-width="2" stroke-dasharray="5 7"/>
+  <text x="245" y="113" fill="#ddd5c2" font-family="Georgia,serif" font-size="36" letter-spacing="7">SINAL DE</text>
+  <text x="245" y="164" fill="#ddd5c2" font-family="Georgia,serif" font-size="44" letter-spacing="10">CINZA</text>
+  <path d="M245 184h316" stroke="#c06a46" stroke-width="2" opacity=".75"/>
+</svg>

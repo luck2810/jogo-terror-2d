@@ -1,0 +1,14 @@
+{
+  "name": "sinal-de-cinza",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Survival horror 2D top-down em HTML5 Canvas, JavaScript puro e CSS.",
+  "scripts": {
+    "test": "node --test",
+    "build": "node scripts/build.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
