@@ -6,6 +6,15 @@ Jogo de terror/survival horror 2D top-down, em português brasileiro, feito com 
 
 Requer um navegador moderno e Python 3 ou Node.js 18+. O jogo não usa dependências de runtime nem precisa de instalação. A partir da raiz do projeto, execute `python3 -m http.server 8000` e abra `http://localhost:8000`. (Também é possível usar `npx serve . -l 8000`, se `serve` já estiver instalado.) Não abra `index.html` por `file://`: o navegador bloqueia módulos JavaScript ES nesse modo.
 
+## Publicar no GitHub Pages
+
+O jogo usa só caminhos relativos, então funciona em `usuario.github.io/repositorio/`. Duas opções:
+
+1. **Automática (recomendada):** em *Settings → Pages → Source*, escolha **GitHub Actions**. A cada push na `main`, o workflow `.github/workflows/pages.yml` roda os testes, gera `dist/` e publica.
+2. **Direta:** *Source: Deploy from a branch → main → / (root)*. O arquivo `.nojekyll` já está na raiz.
+
+Se a página abrir em branco, o jogo agora mostra uma mensagem de erro no rodapé explicando o motivo (ex.: abrir por `file://`).
+
 ## Testar e preparar
 
 - `npm test` — testes automatizados dos sistemas sem DOM, usando o runner integrado do Node.

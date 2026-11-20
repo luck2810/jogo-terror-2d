@@ -20,6 +20,7 @@ export class Interface {
 
   showTitle(canContinue, notice = "") {
     this.currentScreen = "title";
+    this.hasSave = canContinue; this.confirmNew = false;
     this.hud.classList.add("is-hidden");
     this.setTouchActive(false);
     this.layer.innerHTML = `<section class="screen-card" aria-labelledby="title-name">
@@ -92,14 +93,21 @@ export class Interface {
 
   updateHUD(player, objective, roomName, target) {
     this.hud.classList.remove("is-hidden");
-    const pips = document.getElementById("health-pips");
-    pips.innerHTML = Array.from({ length: player.maxHealth }, (_, index) => `<i class="pip ${index >= player.health ? "empty" : ""}"></i>`).join("");
-    document.getElementById("battery-level").style.width = `${Math.max(0, player.battery)}%`;
-    document.getElementById("battery-number").textContent = `${Math.round(player.battery)}%`;
-    document.getElementById("objective-text").textContent = objective;
-    document.getElementById("room-name").textContent = roomName;
-    const hint = document.getElementById("interaction-hint");
-    hint.textContent = target ? `E · ${target.name}` : "";
+    // Só toca no DOM quando algo mudou (antes eram dezenas de gravações por segundo).
+    const cache = (this.hudCache ??= {});
+    const touch = window.matchMedia?.("(pointer: coarse)").matches;
+    const next = { health: player.health, battery: Math.round(player.battery), objective, roomName, hint: target ? `${touch ? "" : "E · "}${target.name}` : "" };
+    if (cache.health !== next.health) {
+      document.getElementById("health-pips").innerHTML = Array.from({ length: player.maxHealth }, (_, index) => `<i class="pip ${index >= player.health ? "empty" : ""}"></i>`).join("");
+    }
+    if (cache.battery !== next.battery) {
+      document.getElementById("battery-level").style.width = `${Math.max(0, next.battery)}%`;
+      document.getElementById("battery-number").textContent = `${next.battery}%`;
+    }
+    if (cache.objective !== next.objective) document.getElementById("objective-text").textContent = objective;
+    if (cache.roomName !== next.roomName) document.getElementById("room-name").textContent = roomName;
+    if (cache.hint !== next.hint) document.getElementById("interaction-hint").textContent = next.hint;
+    Object.assign(cache, next);
   }
 
   setTouchActive(active) {
@@ -143,7 +151,14 @@ export class Interface {
     const button = event.target.closest("[data-action]");
     if (!button || !this.game) return;
     switch (button.dataset.action) {
-      case "new": this.game.startNew(); break;
+      case "new":
+        if (this.hasSave && !this.confirmNew) { // evita apagar o progresso com um toque só
+          this.confirmNew = true;
+          button.textContent = "TOQUE DE NOVO: APAGA O SAVE";
+          this.toast("Já existe um jogo salvo. Toque de novo para recomeçar.", "warning");
+          break;
+        }
+        this.confirmNew = false; this.game.startNew(); break;
       case "continue": this.game.continueGame(); break;
       case "settings": this.showSettings(this.game.settings); break;
       case "resume": this.game.resume(); break;

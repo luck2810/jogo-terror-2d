@@ -56,6 +56,7 @@ export class Lighting {
     this.canvas.width = WIDTH;
     this.canvas.height = HEIGHT;
     this.ctx = this.canvas.getContext("2d");
+    this.reduced = false;
   }
 
   draw(ctx, player, camera, time, worldSolids = []) {
@@ -80,8 +81,11 @@ export class Lighting {
     mask.closePath();
     mask.clip();
 
-    const breath = Math.sin(time * 1.35) * 2;
-    const haloRadius = (player.flashlightOn ? 144 : 64) + breath;
+    const breath = this.reduced ? 0 : Math.sin(time * 1.35) * 2;
+    // Bateria fraca: a lanterna falha em lampejos (desligado com "reduzir efeitos").
+    const lowBattery = player.flashlightOn && player.battery < 20 && !this.reduced;
+    const flicker = lowBattery && Math.sin(time * 41) + Math.sin(time * 23.7) > 1.25 ? 0.72 : 1;
+    const haloRadius = (player.flashlightOn ? 144 * flicker : 64) + breath;
     const halo = mask.createRadialGradient(origin.x, origin.y, 7, origin.x, origin.y, haloRadius);
     halo.addColorStop(0, "rgba(0,0,0,0.96)");
     halo.addColorStop(.58, "rgba(0,0,0,0.55)");
@@ -91,7 +95,7 @@ export class Lighting {
 
     if (player.flashlightOn) {
       const angle = Math.atan2(player.facing.y, player.facing.x);
-      const reach = 318;
+      const reach = 318 * flicker;
       const spread = .42;
       mask.save();
       mask.translate(origin.x, origin.y);

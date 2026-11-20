@@ -1,3 +1,9 @@
+// Teclas físicas (event.code) funcionam em qualquer layout; event.key fica como reserva.
+const CODE_MAP = new Map([
+  ["KeyW", "up"], ["ArrowUp", "up"], ["KeyS", "down"], ["ArrowDown", "down"],
+  ["KeyA", "left"], ["ArrowLeft", "left"], ["KeyD", "right"], ["ArrowRight", "right"],
+  ["KeyE", "interact"], ["KeyF", "flashlight"], ["KeyI", "inventory"], ["Escape", "pause"]
+]);
 const KEY_MAP = new Map([
   ["w", "up"], ["arrowup", "up"], ["s", "down"], ["arrowdown", "down"],
   ["a", "left"], ["arrowleft", "left"], ["d", "right"], ["arrowright", "right"],
@@ -19,15 +25,18 @@ export class Input {
   bind() {
     if (this.bound) return;
     this.bound = true;
+    const commandFor = (event) => CODE_MAP.get(event.code) ?? KEY_MAP.get(String(event.key).toLowerCase());
+    const typingInField = (event) => /^(INPUT|TEXTAREA|SELECT)$/.test(event.target?.tagName || "");
     window.addEventListener("keydown", (event) => {
-      const command = KEY_MAP.get(event.key.toLowerCase());
+      const command = commandFor(event);
       if (!command) return;
+      if (typingInField(event) && command !== "pause") return; // não rouba teclas de campos de texto
       if (["up", "down", "left", "right", "interact", "flashlight", "inventory", "pause"].includes(command)) event.preventDefault();
       if (!this.held.has(command)) this.pressed.add(command);
       this.held.add(command);
     });
     window.addEventListener("keyup", (event) => {
-      const command = KEY_MAP.get(event.key.toLowerCase());
+      const command = commandFor(event);
       if (command) this.held.delete(command);
     });
     window.addEventListener("blur", () => this.reset());

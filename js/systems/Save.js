@@ -34,6 +34,7 @@ export class Save {
         map: parsed.map && typeof parsed.map === "object" ? parsed.map : {},
         flags: parsed.flags && typeof parsed.flags === "object" ? parsed.flags : {},
         checkpoint: validPlayer(parsed.checkpoint) ? parsed.checkpoint : null,
+        events: Array.isArray(parsed.events) ? parsed.events.filter((id) => typeof id === "string" && id.length < 40).slice(0, 50) : [],
         enemy: parsed.enemy && Number.isFinite(parsed.enemy.x) && Number.isFinite(parsed.enemy.y)
           ? { x: parsed.enemy.x, y: parsed.enemy.y, state: String(parsed.enemy.state || "patrol"), target: parsed.enemy.target && Number.isFinite(parsed.enemy.target.x) && Number.isFinite(parsed.enemy.target.y) ? { x: parsed.enemy.target.x, y: parsed.enemy.target.y } : null }
           : null

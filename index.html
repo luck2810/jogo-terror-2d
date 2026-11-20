@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#080e10">
   <meta name="description" content="Sinal de Cinza — um survival horror 2D sobre uma transmissão que não deveria continuar tocando.">
   <title>Sinal de Cinza</title>
-  <link rel="icon" type="image/svg+xml" href="/assets/logo.svg">
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="icon" type="image/svg+xml" href="./assets/logo.svg">
+  <link rel="stylesheet" href="./css/style.css">
 </head>
 <body>
   <main class="app-shell" id="app-shell">
@@ -26,7 +26,7 @@
           Seu navegador não oferece suporte a Canvas. Abra este jogo num navegador moderno.
         </canvas>
         <div class="scanlines" aria-hidden="true"></div>
-        <section id="hud" class="hud is-hidden" aria-live="polite">
+        <section id="hud" class="hud is-hidden">
           <div class="hud-top">
             <div class="vitals" aria-label="Vida"><span class="hud-caption">PULSO</span><div id="health-pips" class="pips"></div></div>
             <div class="objective-box"><span class="hud-caption">AGORA</span><span id="objective-text">Encontre um fusível.</span></div>
@@ -51,6 +51,21 @@
     </section>
     <footer class="footer-line"><span>UMA HISTÓRIA DE CASA SALINA</span><span>WASD / ↑↓←→ · E INTERAGE · F LANTERNA · I INVENTÁRIO · ESC PAUSA</span></footer>
   </main>
-  <script type="module" src="/js/main.js"></script>
+  <div id="boot-error" class="boot-error" role="alert" hidden></div>
+  <noscript><p class="boot-error" style="display:block">Este jogo precisa de JavaScript ativado.</p></noscript>
+  <script>
+    // Diagnóstico de inicialização: mostra o motivo em vez de uma página vazia.
+    window.__bootFail = function (msg) {
+      var box = document.getElementById("boot-error");
+      if (!box) return;
+      box.hidden = false;
+      box.textContent = msg;
+    };
+    if (location.protocol === "file:") {
+      window.__bootFail("Abra o jogo por um servidor (ex.: python3 -m http.server 8000) ou pelo GitHub Pages. Módulos JavaScript não funcionam em file://.");
+    }
+    window.addEventListener("error", function (e) { window.__bootFail("Erro ao iniciar: " + (e.message || "falha ao carregar scripts")); });
+  </script>
+  <script type="module" src="./js/main.js" onerror="__bootFail('Não foi possível carregar js/main.js. Verifique se os arquivos foram publicados com os mesmos caminhos.')"></script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 
 ## Estado da versão
 
-A versão 0.1.0 é uma campanha curta executável no navegador, sem backend e sem dependências de runtime. A arte é desenhada no Canvas e o áudio é sintetizado no cliente. O projeto permanece fonte-first: o diretório `dist/` é uma saída reconstruível, não substitui os módulos-fonte.
+A versão 0.3.0 é uma campanha curta executável no navegador, sem backend e sem dependências de runtime. A arte é desenhada no Canvas e o áudio é sintetizado no cliente. O projeto permanece fonte-first: o diretório `dist/` é uma saída reconstruível, não substitui os módulos-fonte.
 
 ## Comandos
 
@@ -41,3 +41,29 @@ A IA navega por um grafo de salas, com movimento local simples, sem pathfinding 
 ## Melhorias futuras recomendadas
 
 Adicionar navegação A* com desvio de mobiliário, ampliar variações de eventos e ambiente sonoro, criar mais estados de animação, opções de acessibilidade (alto contraste, remapeamento e velocidade do inimigo), expandir conteúdo narrativo e rodar testes ponta a ponta em Chrome, Firefox, Edge e Android físico.
+
+## Versão 0.2 — estabilização (auditoria técnica)
+
+Corrigido, com teste automático ou execução real em Chromium headless:
+
+- **GitHub Pages:** `index.html` usava caminhos absolutos (`/css/...`, `/js/...`), que dão 404 fora da raiz do domínio. Agora são relativos; há `.nojekyll`, workflow de deploy e mensagem de erro de inicialização.
+- **IA travada:** o inimigo parava a ~15 px de qualquer porta (limite de chegada maior que a margem de `getRoomAt`) e nunca saía do corredor; também travava em estantes/móveis e ficava congelado com porta fechada. Agora atravessa portas em duas etapas, contorna obstáculos, e ronda a sala atual se o caminho estiver fechado.
+- **IA justa:** detecção gradual (barra de consciência), som propaga por portas abertas (antes o ruído de passos nunca disparava investigação), velocidade de perseguição 86→98.
+- **ESC** não retomava a pausa e deixava comandos acumulados; entrada agora usa `event.code` e ignora campos de texto.
+- Itens não são mais coletados através de paredes; porta não fecha com alguém no vão.
+- HUD só toca o DOM quando algo muda (e saiu de `aria-live`); piso pré-renderizado em cache.
+- `reducedMotion` agora funciona; mute preserva o volume; aviso e falha da lanterna com pouca bateria; tensão sonora, batimento e passos do inimigo em estéreo; confirmação antes de apagar o save.
+
+Verificado: `npm test` 19/19; campanha completa até a vitória no navegador (com teleporte entre objetos e inimigo desativado para isolar a lógica); rádio 87,5 rejeitado e 87,6 aceito pela interface; zero erros de JS/HTTP sob subcaminho.
+
+Ainda **não** verificado: Firefox/Safari, aparelho Android físico, partida longa com o inimigo ativo e desempenho em GPU real (o FPS medido foi em headless sem GPU).
+
+## Versão 0.3 — arte, conteúdo e sustos
+
+- **Arte:** personagem com 4 direções e animação de caminhada (cachecol ferrugem, mochila, lanterna na mão); inimigo alongado com máscara pálida, braços balançando, olhos que mudam na perseguição e interferência ocasional; ícones próprios para chaves, fusível, pilha, estojo e documentos (com marca de "não lido"); paredes com juntas, topo iluminado e sombra; decoração de piso por cômodo (tapetes, manchas, papéis, cabos, arranhões, rachaduras). Todo o cenário estático fica num cache e só é redesenhado quando uma porta oculta é revelada.
+- **Dormitório (sala opcional):** acessível pelo corredor, começa com a porta fechada. É um refúgio (o inimigo não abre portas), tem a **cama de plantão** (ponto seguro), o diário da enfermeira e a fita rotulada (pistas sobre as batidas e a maré). Ao morrer, o inimigo renasce longe de você.
+- **Eventos de terror (`js/systems/Events.js`):** três batidas ao entrar no corredor, sussurro na casa de força, rangido na cozinha, estática no rádio e sustos ambientais aleatórios (porta ao longe, rangido, sussurro, falha de luz) que nunca ocorrem durante uma perseguição. Eventos únicos são salvos. "Reduzir efeitos visuais" desliga as falhas de luz.
+- **Áudio:** passos, batidas, sussurros e rangidos agora vêm de ruído filtrado (não só osciladores), com pan estéreo.
+- **Testes:** 26 automáticos. Campanha completa e eventos verificados em Chromium headless.
+
+Ainda não verificado: Firefox/Safari, Android físico, partida longa com o inimigo ativo, GPU real.

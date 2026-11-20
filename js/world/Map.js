@@ -15,7 +15,8 @@ const ROOM_DATA = [
   { id: "kitchen", name: "Cozinha", col: 2, row: 1, type: "kitchen" },
   { id: "generator", name: "Casa de força", col: 3, row: 1, type: "generator" },
   { id: "radio", name: "Sala do rádio", col: 3, row: 0, type: "radio" },
-  { id: "pantry", name: "Despensa lacrada", col: 0, row: -1, type: "pantry", optional: true }
+  { id: "pantry", name: "Despensa lacrada", col: 0, row: -1, type: "pantry", optional: true },
+  { id: "dorm", name: "Dormitório", col: 1, row: 1, type: "dorm", optional: true }
 ];
 
 function roomRect(room) {
@@ -53,7 +54,8 @@ export class GameMap {
       doorDefinition("kitchen-door", byId.get("archive"), byId.get("kitchen"), { open: true }),
       doorDefinition("generator-door", byId.get("kitchen"), byId.get("generator"), { locked: true, keyId: "generator-key" }),
       doorDefinition("radio-door", byId.get("generator"), byId.get("radio"), { requiresPower: true }),
-      doorDefinition("pantry-door", byId.get("lobby"), byId.get("pantry"), { hidden: true })
+      doorDefinition("pantry-door", byId.get("lobby"), byId.get("pantry"), { hidden: true }),
+      doorDefinition("dorm-door", byId.get("hall"), byId.get("dorm"))
     ];
     this.items = [
       { id: "service-key", roomId: "lobby", x: byId.get("lobby").rect.x + 146, y: byId.get("lobby").rect.y + 248, name: "Chave de serviço", detail: "Uma chave de latão, marcada com as iniciais C.S." },
@@ -67,12 +69,15 @@ export class GameMap {
       { id: "note-infirmary", roomId: "infirmary", x: byId.get("infirmary").rect.x + 224, y: byId.get("infirmary").rect.y + 154, name: "Ficha de plantão", text: "CASA SALINA — PLANTÃO NOTURNO\n\nA chave do arquivo foi deixada na bandeja inferior. O gerador não deve ser ligado antes de conferir os cabos.\n\nSe ouvir três batidas no corredor, não responda." },
       { id: "note-frequency", roomId: "archive", x: byId.get("archive").rect.x + 216, y: byId.get("archive").rect.y + 145, name: "Caderno de manutenção", text: "RÁDIO DE EMERGÊNCIA\n\nO transmissor deriva para 87,6 MHz quando o motor está estável.\n\nA equipe dizia que o ruído parecia uma voz. Era só interferência. Era só interferência." },
       { id: "note-kitchen", roomId: "kitchen", x: byId.get("kitchen").rect.x + 327, y: byId.get("kitchen").rect.y + 142, name: "Bilhete preso ao quadro", text: "Quando a luz apagar, fique perto das paredes. A coisa não atravessa portas fechadas.\n\nA despensa abre pelo lado do saguão. Procure a marca de sal onde a parede está lisa demais." },
+      { id: "note-dorm", roomId: "dorm", x: byId.get("dorm").rect.x + 250, y: byId.get("dorm").rect.y + 236, name: "Diário da enfermeira", text: "12 de março.\n\nElas ligavam o rádio toda madrugada e diziam que a voz sabia nossos nomes. Eu tranco a porta do dormitório e durmo melhor: a coisa do corredor não sabe abrir portas.\n\nPor isso fecho todas. Por isso ela anda tão devagar. Está esperando alguém esquecer uma aberta." },
+      { id: "note-tape", roomId: "dorm", x: byId.get("dorm").rect.x + 372, y: byId.get("dorm").rect.y + 150, name: "Fita rotulada", text: "FITA 7 — SINAL DE ENTRADA\n\nEscute com atenção: o ruído tem o mesmo ritmo das batidas. Três curtas, uma longa.\n\nNão é a casa que chama. É a maré." },
       { id: "note-last", roomId: "radio", x: byId.get("radio").rect.x + 164, y: byId.get("radio").rect.y + 244, name: "Última transmissão", text: "Se alguém receber isto: a maré cobre a estrada depois das quatro. A saída de serviço fica junto ao transmissor.\n\nNão desliguem a luz. Se a luz falhar, sigam a linha do rádio." }
     ];
     this.props = [
       { id: "generator-panel", kind: "panel", roomId: "generator", x: byId.get("generator").rect.x + 239, y: byId.get("generator").rect.y + 174, name: "Painel do gerador" },
       { id: "radio-receiver", kind: "receiver", roomId: "radio", x: byId.get("radio").rect.x + 267, y: byId.get("radio").rect.y + 154, name: "Transmissor de emergência" },
       { id: "exit", kind: "exit", roomId: "radio", x: byId.get("radio").rect.x + ROOM_W - 54, y: byId.get("radio").rect.y + 184, name: "Porta de serviço" },
+      { id: "bed", kind: "bed", roomId: "dorm", x: byId.get("dorm").rect.x + 192, y: byId.get("dorm").rect.y + 94, name: "Cama de plantão" },
       { id: "secret-wall", kind: "secret", roomId: "lobby", x: byId.get("lobby").rect.x + ROOM_W / 2, y: byId.get("lobby").rect.y + 28, name: "Parede coberta de sal" }
     ];
     this.obstacles = [
@@ -85,10 +90,14 @@ export class GameMap {
       { x: byId.get("generator").rect.x + 102, y: byId.get("generator").rect.y + 73, w: 96, h: 149 },
       { x: byId.get("radio").rect.x + 157, y: byId.get("radio").rect.y + 80, w: 164, h: 52 },
       { x: byId.get("hall").rect.x + 292, y: byId.get("hall").rect.y + 220, w: 62, h: 27 },
+      { x: byId.get("dorm").rect.x + 60, y: byId.get("dorm").rect.y + 66, w: 110, h: 56 },
+      { x: byId.get("dorm").rect.x + 60, y: byId.get("dorm").rect.y + 210, w: 110, h: 56 },
+      { x: byId.get("dorm").rect.x + 330, y: byId.get("dorm").rect.y + 60, w: 80, h: 60 },
       { x: byId.get("pantry").rect.x + 187, y: byId.get("pantry").rect.y + 83, w: 108, h: 142 }
     ];
     this.collected = new Set();
     this.readDocuments = new Set();
+    this._walls = null;
     if (saved) this.restore(saved);
   }
 
@@ -96,6 +105,19 @@ export class GameMap {
 
   getRoomAt(point) {
     return this.rooms.find((room) => point.x > room.rect.x + 13 && point.x < room.rect.x + room.rect.w - 13 && point.y > room.rect.y + 13 && point.y < room.rect.y + room.rect.h - 13) || null;
+  }
+
+  /** Sala mais próxima do ponto (útil quando ele está na soleira de uma porta). */
+  nearestRoom(point) {
+    const inside = this.getRoomAt(point);
+    if (inside) return inside;
+    let best = null; let bestD = Infinity;
+    for (const room of this.rooms) {
+      const r = room.rect;
+      const d = Math.hypot(point.x - Math.max(r.x, Math.min(point.x, r.x + r.w)), point.y - Math.max(r.y, Math.min(point.y, r.y + r.h)));
+      if (d < bestD) { bestD = d; best = room; }
+    }
+    return best;
   }
 
   getRoomName(point) { return this.getRoomAt(point)?.name || "Corredor"; }
@@ -139,13 +161,25 @@ export class GameMap {
     ].filter((wall) => wall.w > 0);
   }
 
-  getSolidRects() {
-    const solids = [];
-    for (const room of this.rooms) {
-      for (const side of ["left", "right", "top", "bottom"]) {
-        solids.push(...this.#wallWithGap(room, side, this.#edgeDoor(room, side)));
+  /** Paredes sem duplicatas; recalculadas só quando uma porta oculta é revelada. */
+  getWallRects() {
+    if (!this._walls) {
+      const seen = new Set(); const walls = [];
+      for (const room of this.rooms) {
+        for (const side of ["left", "right", "top", "bottom"]) {
+          for (const wall of this.#wallWithGap(room, side, this.#edgeDoor(room, side))) {
+            const key = `${wall.x},${wall.y},${wall.w},${wall.h}`;
+            if (!seen.has(key)) { seen.add(key); walls.push(wall); }
+          }
+        }
       }
+      this._walls = walls;
     }
+    return this._walls;
+  }
+
+  getSolidRects() {
+    const solids = [...this.getWallRects()];
     solids.push(...this.obstacles);
     for (const door of this.doors) {
       if (door.visible && !door.open) solids.push(door.rect);
@@ -168,13 +202,16 @@ export class GameMap {
   }
 
   doorLabel(door) {
-    const names = { "front-hall": "Porta do corredor", "ward-door": "Porta da enfermaria", "archive-door": "Porta do arquivo", "kitchen-door": "Porta da cozinha", "generator-door": "Porta da casa de força", "radio-door": "Porta da sala do rádio", "pantry-door": "Porta da despensa" };
+    const names = { "front-hall": "Porta do corredor", "ward-door": "Porta da enfermaria", "archive-door": "Porta do arquivo", "kitchen-door": "Porta da cozinha", "generator-door": "Porta da casa de força", "radio-door": "Porta da sala do rádio", "pantry-door": "Porta da despensa", "dorm-door": "Porta do dormitório" };
     return names[door.id] || "Porta";
   }
 
   findNearestInteractable(point, game, maxDistance = 55) {
     let best = null;
+    const playerRoom = this.getRoomAt(point);
     for (const target of this.getInteractables(game)) {
+      // Itens, documentos e objetos só podem ser usados da própria sala (não através de paredes).
+      if (target.kind !== "door" && playerRoom && target.roomId && playerRoom.id !== target.roomId) continue;
       const d = distance(point, target);
       if (d <= maxDistance && (!best || d < best.distance)) best = { ...target, distance: d };
     }
@@ -201,6 +238,7 @@ export class GameMap {
     door.visible = true;
     door.hidden = false;
     door.locked = false;
+    this._walls = null;
     return true;
   }
 
@@ -248,6 +286,7 @@ export class GameMap {
         if (typeof state.locked === "boolean") door.locked = state.locked;
         if (typeof state.visible === "boolean") { door.visible = state.visible; door.hidden = !state.visible; }
       }
+      this._walls = null;
     }
   }
 }

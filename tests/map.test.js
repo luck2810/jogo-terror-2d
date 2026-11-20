@@ -7,7 +7,7 @@ const flags = { generatorPowered: false };
 
 test("mapa contém salas conectadas e portas trancadas inicialmente", () => {
   const map = new GameMap();
-  assert.equal(map.rooms.length, 8);
+  assert.equal(map.rooms.length, 9);
   assert.equal(map.getDoor("ward-door").locked, true);
   assert.equal(map.getDoor("front-hall").open, true);
   assert.equal(map.roomPath("lobby", "hall", flags).length, 1);

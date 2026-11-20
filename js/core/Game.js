@@ -1,5 +1,6 @@
 import { Enemy } from "../entities/Enemy.js";
 import { Player } from "../entities/Player.js";
+import { EventDirector } from "../systems/Events.js";
 import { Interaction } from "../systems/Interaction.js";
 import { Inventory } from "../systems/Inventory.js";
 import { AudioEngine } from "../systems/Audio.js";
@@ -23,8 +24,10 @@ export class Game {
     this.map = new GameMap();
     this.player = new Player({ x: this.map.roomCenter("lobby").x - 86, y: this.map.roomCenter("lobby").y + 52 });
     this.enemy = new Enemy(this.map);
+    this.enemyPrev = null;
     this.inventory = new Inventory();
     this.interaction = new Interaction();
+    this.events = new EventDirector();
     this.flags = NEW_FLAGS();
     this.checkpoint = this.player.serialize();
     this.state = "title";
@@ -34,6 +37,11 @@ export class Game {
     this.saveTimer = 0;
     this.noiseEvents = [];
     this.wasPlayingBeforeBlur = false;
+    this.lowBatteryWarned = false;
+    this.enemyStepTimer = 0;
+    this.heartTimer = 0;
+    this.enemyPrev = null;
+    document.body.classList.toggle("reduced-motion", Boolean(this.settings.reducedMotion));
     this.ui.connect(this);
     this.ui.showTitle(Save.exists());
     this.#bindGlobalControls();
@@ -58,10 +66,21 @@ export class Game {
   #frame(timestamp) {
     const dt = this.lastFrame ? Math.min(0.05, Math.max(0, (timestamp - this.lastFrame) / 1000)) : 0;
     this.lastFrame = timestamp;
-    this.elapsed += dt;
+    this.elapsed += dt; this.elapsedTime = this.elapsed;
     if (this.state === "playing" && !document.hidden) this.update(dt);
+    else this.#handleIdleInput();
+    this.renderer.reducedMotion = Boolean(this.settings.reducedMotion);
     this.renderer.render(this, this.elapsed);
     this.raf = requestAnimationFrame((time) => this.#frame(time));
+  }
+
+  /** Fora da partida: ESC fecha diálogo/retoma a pausa e comandos acumulados são descartados. */
+  #handleIdleInput() {
+    if (this.input.consume("pause")) {
+      if (this.ui.modalOpen) this.ui.closeModal();
+      else if (this.state === "paused") this.resume();
+    }
+    this.input.pressed.clear();
   }
 
   update(dt) {
@@ -79,21 +98,26 @@ export class Game {
       const on = this.player.toggleFlashlight();
       this.audio.play(on ? "click" : "error");
       if (!on) this.toast("A bateria da lanterna acabou.", "warning");
-      this.autosave();
     }
     const movement = this.input.movement();
+    const flashlightWasOn = this.player.flashlightOn;
     this.player.update(dt, movement, this.map);
+    if (flashlightWasOn && !this.player.flashlightOn) { this.audio.play("error"); this.toast("A lanterna apagou: sem bateria.", "warning"); }
+    if (this.player.battery < 20 && this.player.flashlightOn && !this.lowBatteryWarned) { this.lowBatteryWarned = true; this.toast("A luz da lanterna está falhando.", "warning"); }
+    if (this.player.battery >= 25) this.lowBatteryWarned = false;
     if (movement.moving) {
       this.stepTimer -= dt;
       if (this.stepTimer <= 0) {
         this.audio.play("step");
-        this.emitNoise(this.player, 128);
+        this.emitNoise(this.player, 150);
         this.stepTimer = 0.54;
       }
     }
     const target = this.interaction.update(this);
     if (this.input.consume("interact")) this.interaction.activate(this);
     this.enemy.update(dt, this);
+    this.#updateEnemyAudio(dt);
+    this.events.update(this, dt);
     this.noiseEvents = this.noiseEvents.filter((event) => this.elapsed - event.time < 1.5);
     if (this.player.health <= 0) { this.defeat(); return; }
     this.saveTimer += dt;
@@ -101,13 +125,32 @@ export class Game {
     this.ui.updateHUD(this.player, this.objective, this.map.getRoomName(this.player), target);
   }
 
+  /** Passos posicionais (estéreo + volume por distância), batimento e tensão ambiente. */
+  #updateEnemyAudio(dt) {
+    const enemy = this.enemy; const player = this.player;
+    const dist = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+    const moved = this.enemyPrev ? Math.hypot(enemy.x - this.enemyPrev.x, enemy.y - this.enemyPrev.y) : 0;
+    this.enemyPrev = { x: enemy.x, y: enemy.y };
+    const chasing = enemy.state === "chase";
+    this.enemyStepTimer -= dt;
+    if (moved > 0.05 && dist < 340 && this.enemyStepTimer <= 0) {
+      this.audio.play("enemyStep", { volume: 1.2 * (1 - dist / 340), pan: (enemy.x - player.x) / 260 });
+      this.enemyStepTimer = chasing ? 0.34 : 0.72;
+    }
+    this.heartTimer -= dt;
+    if (chasing && this.heartTimer <= 0) { this.audio.play("heart"); this.heartTimer = 0.62; }
+    this.audio.setTension(chasing ? 1 : Math.max(enemy.awareness, Math.max(0, 1 - dist / 420) * 0.5));
+  }
+
   startNew() {
     Save.clear();
     this.map = new GameMap();
     this.inventory = new Inventory();
     this.flags = NEW_FLAGS();
+    this.events = new EventDirector();
     this.player = new Player({ x: this.map.roomCenter("lobby").x - 86, y: this.map.roomCenter("lobby").y + 52 });
     this.enemy = new Enemy(this.map);
+    this.enemyPrev = null;
     this.checkpoint = this.player.serialize();
     this.objective = "Encontre a chave de serviço no saguão.";
     this.elapsed = 0;
@@ -134,11 +177,13 @@ export class Game {
     this.map = new GameMap(saved.map);
     this.inventory = new Inventory(saved.inventory);
     this.flags = { ...NEW_FLAGS(), ...Object.fromEntries(Object.entries(saved.flags).filter(([key, value]) => ["fuseInstalled", "generatorPowered", "frequencySolved", "checkpointActivated"].includes(key) && typeof value === "boolean")) };
+    this.events = new EventDirector(saved.events || []);
     this.checkpoint = saved.checkpoint || { ...saved.player };
     this.player = new Player(saved.player);
     const defeatedSave = this.player.health <= 0;
     if (defeatedSave) this.player = new Player({ ...this.checkpoint, health: Math.max(1, this.checkpoint.health || 1), flashlightOn: false });
     this.enemy = new Enemy(this.map, defeatedSave ? null : saved.enemy);
+    this.enemyPrev = null;
     this.updateObjective();
     this.state = "playing";
     this.input.reset();
@@ -162,6 +207,7 @@ export class Game {
   resume() {
     if (this.state !== "paused") return;
     this.state = "playing";
+    this.input.reset();
     this.ui.layer.innerHTML = "";
     this.ui.hud.classList.remove("is-hidden");
     this.ui.setTouchActive(true);
@@ -200,6 +246,7 @@ export class Game {
 
   updateSettings(changes, persist = false) {
     this.settings = { ...this.settings, ...changes };
+    document.body.classList.toggle("reduced-motion", Boolean(this.settings.reducedMotion));
     this.audio.setVolumes(this.settings);
     if (persist) this.persistSettings();
   }
@@ -256,11 +303,11 @@ export class Game {
     return true;
   }
 
-  setCheckpoint(player) {
+  setCheckpoint(player, place = "casa de força") {
     this.checkpoint = player.serialize();
     this.checkpoint.health = Math.max(1, this.checkpoint.health);
     this.flags.checkpointActivated = true;
-    this.toast("Ponto seguro registrado na casa de força.");
+    this.toast(`Ponto seguro registrado: ${place}.`);
     this.autosave();
   }
 
@@ -275,6 +322,9 @@ export class Game {
   respawnCheckpoint() {
     this.player = new Player({ ...this.checkpoint, health: Math.max(1, this.checkpoint.health || 1), flashlightOn: false });
     this.enemy = new Enemy(this.map);
+    const farthest = this.enemy.patrol.reduce((best, point) => (Math.hypot(point.x - this.player.x, point.y - this.player.y) > Math.hypot(best.x - this.player.x, best.y - this.player.y) ? point : best));
+    this.enemy.x = farthest.x; this.enemy.y = farthest.y;   // renasce longe de você
+    this.enemyPrev = null;
     this.state = "playing";
     this.ui.layer.innerHTML = "";
     this.ui.hud.classList.remove("is-hidden");
@@ -296,7 +346,7 @@ export class Game {
   snapshot() {
     return {
       player: this.player.serialize(), inventory: this.inventory.serialize(), map: this.map.serialize(),
-      flags: { ...this.flags }, checkpoint: this.checkpoint, enemy: this.enemy.serialize()
+      flags: { ...this.flags }, checkpoint: this.checkpoint, enemy: this.enemy.serialize(), events: [...this.events.seen]
     };
   }
 

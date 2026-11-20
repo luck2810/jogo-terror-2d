@@ -13,10 +13,12 @@ export class Player {
     this.facing = state.facing && Number.isFinite(state.facing.x) ? { ...state.facing } : { x: 1, y: 0 };
     this.walkTime = 0;
     this.invulnerableFor = 0;
+    this.moving = false;
   }
 
   update(dt, movement, map) {
     this.invulnerableFor = Math.max(0, this.invulnerableFor - dt);
+    this.moving = Boolean(movement.moving);
     if (movement.moving) {
       this.facing = { x: movement.x, y: movement.y };
       const delta = movement.x * this.speed * dt;

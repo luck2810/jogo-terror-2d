@@ -1,3 +1,5 @@
+import { circleRectOverlap } from "../world/Collision.js";
+
 export class Interaction {
   constructor() { this.target = null; }
 
@@ -18,6 +20,12 @@ export class Interaction {
       return;
     }
     if (target.kind === "door") {
+      const doorRef = target.doorRef || target;
+      if (doorRef.open && this.#somethingInDoorway(game, doorRef)) {
+        game.audio.play("error");
+        game.toast("Algo está no caminho da porta.", "warning");
+        return;
+      }
       const result = game.map.interactDoor(target, game.inventory, game.flags);
       if (result.ok) {
         game.audio.play("door");
@@ -40,6 +48,11 @@ export class Interaction {
       game.win();
       return;
     }
+    if (target.kind === "bed") {
+      game.audio.play("interact");
+      game.setCheckpoint(game.player, "dormitório");
+      return;
+    }
     if (target.kind === "secret") {
       const found = game.map.revealPantry();
       if (found) {
@@ -49,6 +62,11 @@ export class Interaction {
         game.autosave();
       }
     }
+  }
+
+  /** Impede fechar a porta com o jogador ou o inimigo dentro do vão (evita ficar preso na parede). */
+  #somethingInDoorway(game, door) {
+    return [game.player, game.enemy].some((body) => body && circleRectOverlap({ x: body.x, y: body.y, radius: body.radius + 8 }, door.rect));
   }
 
   #collect(game, item) {

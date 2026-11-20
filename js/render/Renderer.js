@@ -1,4 +1,4 @@
-import { drawEnemy, drawPlayer, drawRoomFurniture, seededNoise } from "./Art.js";
+import { drawDocumentIcon, drawEnemy, drawItemIcon, drawPlayer, drawRoomDecor, drawRoomFurniture, drawWall, seededNoise } from "./Art.js";
 import { Lighting } from "../systems/Lighting.js";
 import { ROOM_H, ROOM_W } from "../world/Map.js";
 
@@ -12,6 +12,8 @@ export class Renderer {
     this.ctx = canvas.getContext("2d", { alpha: false });
     this.lighting = new Lighting();
     this.dpr = 1;
+    this.reducedMotion = false;
+    this.floor = null;
     this.resize();
     window.addEventListener("resize", () => this.resize());
   }
@@ -24,6 +26,26 @@ export class Renderer {
     this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
   }
 
+  #cacheKey(map) { return map.doors.filter((door) => door.visible).length; }
+
+  /** O cenário estático (piso, decoração, paredes e móveis) é desenhado uma única vez e reaproveitado a cada quadro. */
+  #buildFloorCache(map) {
+    const pad = 40;
+    const minX = Math.min(...map.rooms.map((r) => r.rect.x)) - pad;
+    const minY = Math.min(...map.rooms.map((r) => r.rect.y)) - pad;
+    const maxX = Math.max(...map.rooms.map((r) => r.rect.x + r.rect.w)) + pad;
+    const maxY = Math.max(...map.rooms.map((r) => r.rect.y + r.rect.h)) + pad;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(maxX - minX); canvas.height = Math.ceil(maxY - minY);
+    const floorCtx = canvas.getContext("2d");
+    floorCtx.translate(-minX, -minY);
+    for (const room of map.rooms) { this.#drawRoom(floorCtx, room, 0); drawRoomDecor(floorCtx, room); }
+    for (const wall of map.getWallRects()) drawWall(floorCtx, wall);
+    for (const obstacle of map.obstacles) { floorCtx.fillStyle = "#282e2b"; floorCtx.fillRect(obstacle.x, obstacle.y, obstacle.w, obstacle.h); }
+    for (const room of map.rooms) drawRoomFurniture(floorCtx, room);
+    this.floor = { canvas, x: minX, y: minY, key: this.#cacheKey(map) };
+  }
+
   render(game, now) {
     const ctx = this.ctx;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
@@ -33,24 +55,19 @@ export class Renderer {
     const camera = { x: game.player.x, y: game.player.y };
     ctx.save();
     ctx.translate(VIEW_W / 2 - camera.x, VIEW_H / 2 - camera.y);
-    for (const room of game.map.rooms) this.#drawRoom(ctx, room, now);
-    for (const wall of game.map.getSolidRects()) {
-      ctx.fillStyle = "#252a27";
-      ctx.fillRect(wall.x, wall.y, wall.w, wall.h);
-      ctx.fillStyle = "rgba(173,160,128,.12)";
-      if (wall.w > wall.h) ctx.fillRect(wall.x, wall.y, wall.w, 3);
-      else ctx.fillRect(wall.x, wall.y, 3, wall.h);
-    }
+    if (!this.floor || this.floor.key !== this.#cacheKey(game.map)) this.#buildFloorCache(game.map);
+    ctx.drawImage(this.floor.canvas, this.floor.x, this.floor.y);
     for (const door of game.map.doors) if (door.visible) this.#drawDoor(ctx, door, now);
-    for (const room of game.map.rooms) drawRoomFurniture(ctx, room);
     this.#drawTargets(ctx, game, now);
     drawEnemy(ctx, game.enemy, now);
     drawPlayer(ctx, game.player, now);
     this.#drawExitGlow(ctx, game);
     ctx.restore();
-    this.#drawDust(ctx, camera, now);
+    if (!this.reducedMotion) this.#drawDust(ctx, camera, now);
+    this.lighting.reduced = this.reducedMotion;
     this.lighting.draw(ctx, game.player, camera, now, game.map.getSolidRects());
-    this.#drawStaticNoise(ctx, now);
+    this.#drawBlackout(ctx, game);
+    if (!this.reducedMotion) this.#drawStaticNoise(ctx, now);
   }
 
   #drawRoom(ctx, room, time) {
@@ -59,7 +76,7 @@ export class Renderer {
       lobby: ["#252c2a", "#29302d"], hall: ["#202728", "#252b2a"],
       infirmary: ["#2b3230", "#2e3430"], archive: ["#292e2b", "#2c312d"],
       kitchen: ["#2a302c", "#30332c"], generator: ["#222a28", "#282e2b"],
-      radio: ["#222c2d", "#283031"], pantry: ["#242d2a", "#2a302a"]
+      radio: ["#222c2d", "#283031"], pantry: ["#242d2a", "#2a302a"], dorm: ["#2a2b2c", "#2e302f"]
     };
     ctx.fillStyle = palettes[room.type]?.[0] || "#252c2a";
     ctx.fillRect(r.x, r.y, r.w, r.h);
@@ -123,20 +140,9 @@ export class Renderer {
   #drawTargets(ctx, game, time) {
     for (const item of game.map.items) {
       if (game.map.collected.has(item.id)) continue;
-      const glow = 0.45 + Math.sin(time * 2 + item.x) * .12;
-      ctx.fillStyle = `rgba(197,151,91,${glow * .24})`;
-      ctx.fillRect(item.x - 9, item.y - 9, 18, 18);
-      ctx.fillStyle = item.id.includes("key") ? "#c29961" : item.id === "fuse" ? "#bdb496" : "#819183";
-      ctx.fillRect(item.x - 5, item.y - 3, 10, 7);
-      ctx.fillStyle = "#e3d3a3";
-      ctx.fillRect(item.x - 2, item.y - 5, 4, 2);
+      drawItemIcon(ctx, item, time);
     }
-    for (const doc of game.map.documents) {
-      ctx.fillStyle = game.map.readDocuments.has(doc.id) ? "#8f8b7b" : "#d2c8aa";
-      ctx.fillRect(doc.x - 5, doc.y - 4, 10, 8);
-      ctx.fillStyle = "rgba(48,48,41,.7)";
-      ctx.fillRect(doc.x - 3, doc.y - 2, 6, 1);
-    }
+    for (const doc of game.map.documents) drawDocumentIcon(ctx, doc, game.map.readDocuments.has(doc.id));
     for (const prop of game.map.props) {
       if (prop.kind === "secret" && game.map.getDoor("pantry-door")?.visible) continue;
       if (prop.kind === "receiver" && !game.flags.generatorPowered) continue;
@@ -151,6 +157,17 @@ export class Renderer {
         ctx.fillRect(prop.x - 17, prop.y - 23, 34, 46);
       }
     }
+  }
+
+  /** Falha de luz de evento: lampejos escuros curtos (desligada em "reduzir efeitos"). */
+  #drawBlackout(ctx, game) {
+    const left = game.events?.blackout ?? 0;
+    if (left <= 0 || this.reducedMotion) return;
+    ctx.save();
+    ctx.globalAlpha = Math.floor(left * 14) % 2 ? 0.92 : 0.45;
+    ctx.fillStyle = "#020405";
+    ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+    ctx.restore();
   }
 
   #drawExitGlow(ctx, game) {
