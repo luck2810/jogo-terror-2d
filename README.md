@@ -22,7 +22,7 @@ Se a página abrir em branco, o jogo agora mostra uma mensagem de erro no rodap�
 
 ## Controles
 
-No computador: WASD ou setas movem; E interage; F alterna a lanterna; I abre o inventário; Escape pausa ou fecha um diálogo. No celular: use o joystick virtual e os botões de ação. O navegador só inicia o áudio após um gesto explícito, conforme as regras de autoplay.
+No computador: WASD ou setas movem; E interage; F alterna a lanterna; I abre o inventário; Escape pausa ou fecha um diálogo. Em celulares e tablets com toque, use o joystick virtual e os botões de ação, exibidos durante a partida. O navegador só inicia o áudio após um gesto explícito, conforme as regras de autoplay.
 
 ## Estrutura
 

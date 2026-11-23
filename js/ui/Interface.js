@@ -2,6 +2,14 @@ function escapeHTML(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
 }
 
+function supportsTouchInput() {
+  return Boolean(
+    window.matchMedia?.("(any-pointer: coarse)").matches
+    || window.matchMedia?.("(pointer: coarse)").matches
+    || (globalThis.navigator?.maxTouchPoints ?? 0) > 0
+  );
+}
+
 export class Interface {
   constructor() {
     this.layer = document.getElementById("screen-layer");
@@ -9,6 +17,8 @@ export class Interface {
     this.hud = document.getElementById("hud");
     this.toastNode = document.getElementById("toast");
     this.toastTimer = null;
+    this.touchCapable = supportsTouchInput() || window.innerWidth < 720;
+    document.documentElement.classList.toggle("touch-capable", this.touchCapable);
     this.game = null;
     this.layer.addEventListener("click", (event) => this.#handleScreenClick(event));
     this.modalRoot.addEventListener("click", (event) => this.#handleModalClick(event));
@@ -95,7 +105,7 @@ export class Interface {
     this.hud.classList.remove("is-hidden");
     // Só toca no DOM quando algo mudou (antes eram dezenas de gravações por segundo).
     const cache = (this.hudCache ??= {});
-    const touch = window.matchMedia?.("(pointer: coarse)").matches;
+    const touch = this.touchCapable;
     const next = { health: player.health, battery: Math.round(player.battery), objective, roomName, hint: target ? `${touch ? "" : "E · "}${target.name}` : "" };
     if (cache.health !== next.health) {
       document.getElementById("health-pips").innerHTML = Array.from({ length: player.maxHealth }, (_, index) => `<i class="pip ${index >= player.health ? "empty" : ""}"></i>`).join("");
@@ -112,7 +122,9 @@ export class Interface {
 
   setTouchActive(active) {
     const controls = document.getElementById("touch-controls");
-    const isTouch = window.matchMedia?.("(pointer: coarse)").matches || window.innerWidth < 720;
+    const isTouch = supportsTouchInput() || window.innerWidth < 720;
+    this.touchCapable = isTouch;
+    document.documentElement.classList.toggle("touch-capable", isTouch);
     controls.classList.toggle("active", Boolean(active && isTouch));
   }
 

@@ -11,9 +11,9 @@
 | Escape | Pausar; enquanto um diálogo está aberto, fechar o diálogo primeiro |
 | Botão ♪ no cabeçalho | Alternar áudio geral |
 
-## Celular
+## Celular e tablet
 
-O joystick virtual fica no canto inferior esquerdo; interação, lanterna e bolsa ficam à direita. Controles são ativados durante a partida, usam Pointer Events e `touch-action: none`. O posicionamento evita o centro, que permanece livre para ver o ambiente. Em modo retrato, o Canvas mantém proporção 16:9 e se adapta à largura disponível; em paisagem estreita, os controles e menus diminuem.
+O joystick virtual fica no canto inferior esquerdo; interação, lanterna e bolsa ficam à direita. Os controles são ativados durante a partida em dispositivos com capacidade de toque, incluindo tablets em retrato e paisagem; usam Pointer Events e `touch-action: none`. O posicionamento evita o centro, que permanece livre para ver o ambiente. Em modo retrato, o Canvas mantém proporção 16:9 e se adapta à largura disponível; em paisagem estreita, os controles e menus diminuem.
 
 ## HUD e ações
 
