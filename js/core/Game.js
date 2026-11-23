@@ -229,7 +229,7 @@ export class Game {
   useItem(id) {
     if (!this.inventory.has(id)) return;
     if (id === "battery-cell") {
-      if (this.player.battery >= 99) { this.toast("A bateria já está quase cheia."); return; }
+      if (this.player.battery >= 99) { this.toast("A lanterna possui bateria infinita."); return; }
       this.inventory.remove(id);
       this.player.rechargeBattery(45);
       this.audio.play("pickup");

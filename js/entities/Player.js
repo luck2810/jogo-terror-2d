@@ -8,8 +8,8 @@ export class Player {
     this.speed = 112;
     this.maxHealth = 3;
     this.health = Number.isFinite(state.health) ? Math.max(0, Math.min(3, state.health)) : 3;
-    this.battery = Number.isFinite(state.battery) ? Math.max(0, Math.min(100, state.battery)) : 100;
-    this.flashlightOn = Boolean(state.flashlightOn) && this.battery > 0;
+    this.battery = 100;
+    this.flashlightOn = Boolean(state.flashlightOn);
     this.facing = state.facing && Number.isFinite(state.facing.x) ? { ...state.facing } : { x: 1, y: 0 };
     this.walkTime = 0;
     this.invulnerableFor = 0;
@@ -26,15 +26,10 @@ export class Player {
       moveWithCollisions(this, delta, deltaY, () => map.getSolidRects());
       this.walkTime += dt;
     }
-    if (this.flashlightOn) {
-      this.battery = Math.max(0, this.battery - dt * 2.05);
-      if (this.battery <= 0) this.flashlightOn = false;
-    }
   }
 
   toggleFlashlight() {
     if (this.flashlightOn) { this.flashlightOn = false; return true; }
-    if (this.battery <= 0) return false;
     this.flashlightOn = true;
     return true;
   }

@@ -3,7 +3,7 @@ const ITEM_DETAILS = {
   "fuse": { name: "Fusível cerâmico", description: "Peça necessária para o gerador." },
   "archive-key": { name: "Chave do arquivo", description: "Abre o arquivo de prontuários." },
   "generator-key": { name: "Chave da casa de força", description: "Abre a sala das máquinas." },
-  "battery-cell": { name: "Pilha de lanterna", description: "Recupera até 45% da carga." },
+  "battery-cell": { name: "Pilha de lanterna", description: "A lanterna tem carga infinita; esta pilha não é necessária." },
   "med-kit": { name: "Estojo de primeiros socorros", description: "Recupera um ponto de vida." }
 };
 

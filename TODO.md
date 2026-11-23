@@ -16,7 +16,7 @@ Legenda: `[x]` concluído com evidência; `[ ]` pendente; `[~]` parcial, com lim
 
 - [x] **Exploração, chaves e segredos.** Implementar mapa dividido em ambientes; salas interconectadas; portas trancadas; chaves e itens necessários para avançar; objetos examináveis; segredos e áreas opcionais.
 
-- [x] **Iluminação, lanterna e eventos de terror.** Implementar sistema de iluminação dinâmica; lanterna com bateria limitada; áreas de escuridão; eventos ambientais; sons posicionais ou direcionais, quando possível; inimigo com inteligência artificial básica.
+- [x] **Iluminação, lanterna e eventos de terror.** Implementar sistema de iluminação dinâmica; lanterna com bateria infinita; áreas de escuridão; eventos ambientais; sons posicionais ou direcionais, quando possível; inimigo com inteligência artificial básica.
 
 - [x] **IA justa do inimigo.** Implementar estados reais de comportamento: patrulha; investigação de ruídos; perseguição; busca pelo jogador; retorno à patrulha. O comportamento deve ser consistente e justo, sem detectar o jogador através de paredes indevidamente.
 
